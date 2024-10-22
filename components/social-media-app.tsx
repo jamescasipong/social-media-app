@@ -195,7 +195,7 @@ export default function SocialMediaApp() {
   const handleComment = async (postId: string) => {
     try {
       const response = await fetch(
-        `https://socmedia-api.vercel.app/auth/comments/${postId}`,
+        `https://socmedia-api.vercel.app/user/auth/comments/${postId}`,
         {
           method: "POST",
           headers: {
