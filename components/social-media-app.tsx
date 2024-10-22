@@ -162,7 +162,7 @@ export default function SocialMediaApp() {
     }
   };
 
-  const handleReaction = (postId: number, emoji: "string") => {
+  const handleReaction = (postId: number, emoji: string) => {
     setPosts(
       posts.map((post) =>
         post.id === postId
@@ -496,7 +496,7 @@ export default function SocialMediaApp() {
                                   </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="flex p-0">
-                                  {emojiReactions.map((emoji: any) => (
+                                  {emojiReactions.map((emoji: string) => (
                                     <Button
                                       key={emoji}
                                       variant="ghost"
@@ -585,9 +585,7 @@ export default function SocialMediaApp() {
                     ) : (
                       <Card>
                         <CardContent>
-                          <p className="text-center py-4">
-                            No results found for "{searchTerm}"
-                          </p>
+                          <p>No results found for &quot;{searchTerm}&quot;</p>
                         </CardContent>
                       </Card>
                     )
@@ -636,7 +634,7 @@ export default function SocialMediaApp() {
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="flex p-0">
-                                {emojiReactions.map((emoji: any) => (
+                                {emojiReactions.map((emoji: string) => (
                                   <Button
                                     key={emoji}
                                     variant="ghost"
