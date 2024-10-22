@@ -8,7 +8,6 @@ import {
   Search as SearchIcon,
   User,
   Menu,
-  X,
   ThumbsUp,
   MessageSquare,
   Share2,
@@ -17,7 +16,6 @@ import {
   Settings,
   LogOut,
   Image as ImageIcon,
-  Smile,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +27,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -123,13 +120,8 @@ export default function SocialMediaApp() {
   const [notifications, setNotifications] = useState<
     { id: number; content: string }[]
   >([]);
-  const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Post[]>([]);
-  const [showEmojiReactions, setShowEmojiReactions] = useState<boolean>(false);
-
-  const handleShowEmojiReactions = () =>
-    setShowEmojiReactions(!showEmojiReactions);
 
   const toggleSidebar = () => setIsSidebarOpen(true);
 
@@ -168,14 +160,6 @@ export default function SocialMediaApp() {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleLike = (postId: number) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === postId ? { ...post, likes: post.likes + 1 } : post
-      )
-    );
   };
 
   const handleReaction = (postId: number, emoji: "string") => {
