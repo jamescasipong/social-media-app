@@ -123,27 +123,30 @@ export default function SocialMediaApp() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/posts", {
-        method: "POST",
-        body: JSON.stringify({
-          content: newPost,
-          image: newPostImage || "https://via.placeholder.com/300",
-          createdAt: new Date().toISOString(),
-          comments: [],
-          reactions: {
-            "👍": [],
-            "❤️": [],
-            "😂": [],
-            "😮": [],
-            "😢": [],
-            "😡": [],
+      const response = await fetch(
+        "https://socmedia-api.vercel.app/api/auth/posts",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            content: newPost,
+            image: newPostImage || "https://via.placeholder.com/300",
+            createdAt: new Date().toISOString(),
+            comments: [],
+            reactions: {
+              "👍": [],
+              "❤️": [],
+              "😂": [],
+              "😮": [],
+              "😢": [],
+              "😡": [],
+            },
+          }),
+          headers: {
+            "Content-Type": "application/json", // Ensure correct content type
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
-        }),
-        headers: {
-          "Content-Type": "application/json", // Ensure correct content type
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
+        }
+      );
 
       console.log("response", response);
 
@@ -164,7 +167,9 @@ export default function SocialMediaApp() {
 
   const getAllPosts = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/auth/posts");
+      const response = await fetch(
+        "https://socmedia-api.vercel.app/api/auth/posts"
+      );
       if (response.ok) {
         const postsData = await response.json();
         setPosts(postsData);
@@ -190,7 +195,7 @@ export default function SocialMediaApp() {
   const handleComment = async (postId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/auth/comments/${postId}`,
+        `https://socmedia-api.vercel.app/auth/comments/${postId}`,
         {
           method: "POST",
           headers: {

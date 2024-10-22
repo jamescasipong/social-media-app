@@ -31,13 +31,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = localStorage.getItem("authToken");
     if (token) {
       const fetchUserData = async () => {
-        const response = await fetch("http://localhost:5000/api/auth/profile", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Pass the token in the header
-          },
-        });
+        const response = await fetch(
+          "https://socmedia-api.vercel.app/api/auth/profile",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Pass the token in the header
+            },
+          }
+        );
 
         if (response.ok) {
           const userData = await response.json();
@@ -53,13 +56,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const response = await fetch(
+      "https://socmedia-api.vercel.app/api/auth/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      }
+    );
 
     if (!response.ok) {
       throw new Error("Incorrect email or password");
@@ -76,13 +82,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     email: string,
     password: string
   ) => {
-    const response = await fetch("http://localhost:5000/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, email, password }),
-    });
+    const response = await fetch(
+      "https://socmedia-api.vercel.app/api/auth/register",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, email, password }),
+      }
+    );
 
     if (!response.ok) {
       throw new Error("Email already in use or another error occurred");
