@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
@@ -37,79 +38,105 @@ import {
   Share2,
   ThumbsUp,
   Upload,
-  User
-} from 'lucide-react';
+  User,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../app/contexts/AuthContext";
 
 type User = {
-  _id: string
-  username: string
-  email: string
-  avatar: string
-}
+  _id: string;
+  username: string;
+  email: string;
+  avatar: string;
+};
 
 interface Comment {
-  id: string
-  createdAt: Date
-  username: string
-  content: string
+  id: string;
+  createdAt: Date;
+  username: string;
+  content: string;
 }
 
 interface Post {
-  _id: string
-  userId: User
-  content: string
-  image?: string
-  createdAt: Date
-  comments: Comment[]
-  reactions: Record<string, string[]>
+  _id: string;
+  userId: User;
+  content: string;
+  image?: string;
+  createdAt: Date;
+  comments: Comment[];
+  reactions: Record<string, string[]>;
 }
 
 interface ExploreItem {
-  id: string
-  title: string
-  image: string
+  id: string;
+  title: string;
+  image: string;
 }
 
 type Notification = {
-  id: string
-  content: string
-  createdAt: Date
-}
+  id: string;
+  content: string;
+  createdAt: Date;
+};
 
-const emojiReactions = ["👍", "❤️", "😂", "😮", "😢", "😡"]
+const emojiReactions = ["👍", "❤️", "😂", "😮", "😢", "😡"];
 
 export default function SocialMediaApp() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("home")
-  const [posts, setPosts] = useState<Post[]>([])
-  const [newPost, setNewPost] = useState("")
-  const [newPostImage, setNewPostImage] = useState<string | null>(null)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [searchResults, setSearchResults] = useState<Post[]>([])
-  const [exploreItems, setExploreItems] = useState<ExploreItem[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [commentTexts, setCommentTexts] = useState<{ [key: string]: string }>({})
-  
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
-  const { user, logout } = useAuth()
-  const router = useRouter()
-  const pathname = usePathname()
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [newPost, setNewPost] = useState("");
+  const [newPostImage, setNewPostImage] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<Post[]>([]);
+  const [exploreItems, setExploreItems] = useState<ExploreItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [commentTexts, setCommentTexts] = useState<{ [key: string]: string }>(
+    {}
+  );
+  const [postCount, setPostCount] = useState(0);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const handleCommentChange = (postId: string, text: string) => {
     setCommentTexts((prev) => ({
       ...prev,
       [postId]: text,
-    }))
-  }
+    }));
+  };
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await fetch(
+          "https://socmedia-api.vercel.app/api/auth/posts"
+        );
+        if (response.ok) {
+          const postsData = await response.json();
+          setPostCount(postsData.length);
+        } else {
+          throw new Error("Failed to fetch posts");
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchPosts();
+  }, []);
 
   const handleNewPost = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+    e.preventDefault();
+    if (!user) {
+      alert("You must be logged in to create a post");
+      router.push("/login");
+    }
     try {
       const response = await fetch(
         "https://socmedia-api.vercel.app/api/auth/posts",
@@ -134,52 +161,75 @@ export default function SocialMediaApp() {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
         }
-      )
+      );
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to create post")
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create post");
       }
 
-      setNewPost("")
-      setNewPostImage(null)
-      await getAllPosts()
+      setNewPost("");
+      setNewPostImage(null);
+      await getAllPosts();
     } catch (error) {
-      console.error("Error creating post:", error)
+      console.error("Error creating post:", error);
     }
-  }
+  };
 
   const getAllPosts = async () => {
     try {
       const response = await fetch(
         "https://socmedia-api.vercel.app/api/auth/posts"
-      )
+      );
       if (response.ok) {
-        const postsData = await response.json()
-        setPosts(postsData)
+        const postsData = await response.json();
+        setPosts(postsData);
       } else {
-        throw new Error("Failed to fetch posts")
+        throw new Error("Failed to fetch posts");
       }
     } catch (error) {
-      console.error("Error fetching data:", error)
+      console.error("Error fetching data:", error);
     }
-  }
+    setLoading(false);
+  };
 
   useEffect(() => {
-
-    if (!user){
-      router.push("/login")
-    }
-    setLoading(true)
     const interval = setInterval(() => {
-      getAllPosts()
-    }, 2000)
-    setLoading(false)
-    return () => clearInterval(interval)
-  }, [])
+      getAllPosts();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleComment = async (postId: string) => {
+    if (!user) {
+      alert("You must be logged in to create a post");
+      router.push("/login");
+    }
+
     try {
+      const updatedPosts = posts.map((post) =>
+        post._id === postId
+          ? {
+              ...post,
+              comments: [
+                ...post.comments,
+                {
+                  id: Date.now().toString(),
+                  createdAt: new Date(),
+                  username: user?.username || "Anonymous",
+                  content: commentTexts[postId],
+                },
+              ],
+            }
+          : post
+      );
+      setPosts(updatedPosts);
+
+      setCommentTexts((prev) => ({
+        ...prev,
+        [postId]: "",
+      }));
+
       const response = await fetch(
         `https://socmedia-api.vercel.app/api/auth/comments/${postId}`,
         {
@@ -193,61 +243,44 @@ export default function SocialMediaApp() {
             username: user?.username,
           }),
         }
-      )
-
-      setCommentTexts((prev) => ({
-        ...prev,
-        [postId]: "",
-      }))
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to add comment")
+        throw new Error("Failed to add comment");
       }
-
-
-      await getAllPosts().then(() => setLoading(false))
-
     } catch (error) {
-      console.error("Error adding comment:", error)
+      console.error("Error adding comment:", error);
     }
-  }
+  };
 
   useEffect(() => {
-    setLoading(true)
-    getAllPosts().then(() => setLoading(false))
-    const interval = setInterval(getAllPosts, 2000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    setCurrentUser(user)
+    setCurrentUser(user);
 
     if (user && pathname === "/login") {
-      router.push("/")
+      router.push("/");
     }
-
-  }, [user, router])
+  }, [user, router]);
 
   const handleLogout = () => {
-    logout()
-    router.push("/login")
-  }
+    logout();
+    router.push("/login");
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setNewPostImage(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setNewPostImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleReaction = (postId: string, emoji: string) => {
-    if (!currentUser) {
-      console.error("User is not logged in");
-      return;
+    if (!user) {
+      alert("You must be logged in to react to a post");
+      router.push("/login");
     }
 
     setPosts(
@@ -257,47 +290,51 @@ export default function SocialMediaApp() {
           // Remove current user's reactions
           Object.keys(updatedReactions).forEach((key) => {
             updatedReactions[key] = updatedReactions[key].filter(
-              (userId) => userId !== currentUser._id
+              (userId) => userId !== currentUser?._id
             );
           });
           // Add the reaction
           if (!updatedReactions[emoji]) {
             updatedReactions[emoji] = [];
           }
-          updatedReactions[emoji].push(currentUser._id);
+          if (currentUser?._id) {
+            updatedReactions[emoji].push(currentUser._id);
+          }
 
-          fetch(`https://socmedia-api.vercel.app/api/auth/reactions/${postId}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-            },
-            body: JSON.stringify({
-              reactions: updatedReactions,
-            }),
-          });
+          fetch(
+            `https://socmedia-api.vercel.app/api/auth/reactions/${postId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+              },
+              body: JSON.stringify({
+                reactions: updatedReactions,
+              }),
+            }
+          );
+
           return { ...post, reactions: updatedReactions };
         }
         return post;
       })
     );
-
-    getAllPosts();
   };
 
   const handleSearch = (term: string) => {
-    setSearchTerm(term)
+    setSearchTerm(term);
     if (term.trim()) {
       const results = posts.filter(
         (post) =>
           post.content.toLowerCase().includes(term.toLowerCase()) ||
           post.userId.username.toLowerCase().includes(term.toLowerCase())
-      )
-      setSearchResults(results)
+      );
+      setSearchResults(results);
     } else {
-      setSearchResults([])
+      setSearchResults([]);
     }
-  }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -309,17 +346,53 @@ export default function SocialMediaApp() {
             createdAt: new Date(),
           },
           ...prev,
-        ])
+        ]);
       }
-    }, 10000)
+    }, 10000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
-
-  if (loading) {
-    return <div>Loading...</div>
-  }
+  const PostSkeleton = () => (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start space-x-4">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1 space-y-1">
+            <Skeleton className="h-4 w-[200px]" />
+            <Skeleton className="h-3 w-[150px]" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-4 w-full mb-2" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-48 w-full mt-2" />
+      </CardContent>
+      <CardFooter className="flex flex-col items-start space-y-4">
+        <div className="flex w-full justify-between">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-16" />
+        </div>
+        <Skeleton className="h-4 w-full" />
+        <div className="w-full space-y-4">
+          <div className="flex items-start space-x-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-3 w-[100px]" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 flex-1" />
+            <Skeleton className="h-8 w-8" />
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center">
@@ -535,141 +608,148 @@ export default function SocialMediaApp() {
                     </div>
                   </CardContent>
                 </Card>
-                {(searchTerm ? searchResults : posts).map((post) => (
-                  <Card key={post._id}>
-                    <CardHeader>
-                      <div className="flex items-start space-x-4">
-                        <Avatar>
-                          <AvatarImage src="/placeholder-avatar.jpg" />
-                          <AvatarFallback>
-                            {post.userId.username.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-bold leading-none">
-                            {post.userId.username}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(post.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p>{post.content}</p>
-                      {post.image !== "https://via.placeholder.com/300" && (
-                        <img
-                          src={post.image}
-                          alt="Post image"
-                          className="mt-2 rounded-md max-h-96 w-full object-cover"
-                        />
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex flex-col items-start space-y-4">
-                      <div className="flex w-full justify-between">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <ThumbsUp className="mr-2 h-4 w-4" />
-                              React (
-                              {Object.values(post.reactions).flat().length})
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="flex p-0">
-                            {emojiReactions.map((emoji) => (
-                              <Button
-                                key={emoji}
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  handleReaction(post._id, emoji)
-                                  document.body.click() // Close the popover
-                                }}
-                              >
-                                {emoji}
-                              </Button>
-                            ))}
-                          </PopoverContent>
-                        </Popover>
-                        <Button variant="ghost" size="sm">
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Comment ({post.comments.length})
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Share2 className="mr-2 h-4 w-4" />
-                          Share
-                        </Button>
-                      </div>
-                      <div  className="flex flex-wrap gap-1">
-                        {Object.entries(post.reactions).map(
-                          ([emoji, users]) =>
-                            users.length > 0 && (
-                              <span key={emoji} className="text-sm">
-                                {emoji} {users.length}
-                              </span>
-                            )
-                        )}
-                      </div>
-                      <div className="w-full space-y-5">
-                        {post.comments.map((comment) => (
-                          <div
-                            key={comment.id}
-                            className="flex items-start space-x-2"
-                          >
-                            <Avatar>
-                              <AvatarImage src="/placeholder-avatar.jpg" />
-                              <AvatarFallback>
-                                {comment.username
-                                  ?.charAt(0)
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 space-y-2 gap-5">
-                              <p className="text-sm font-bold leading-none">
-                                {comment.username}
-                              </p>
-                              <p className="text-sm">{comment.content}</p>
-                            </div>
-                          </div>
-                        ))}
-                        <div className="flex items-center space-x-2">
+                {loading ? (
+                  <>
+                    {[...Array(postCount)].map((_, index) => (
+                      <PostSkeleton key={index} />
+                    ))}
+                  </>
+                ) : (
+                  (searchTerm ? searchResults : posts).map((post) => (
+                    <Card key={post._id}>
+                      <CardHeader>
+                        <div className="flex items-start space-x-4">
                           <Avatar>
-                            <AvatarImage src={currentUser?.avatar} />
+                            <AvatarImage src="/placeholder-avatar.jpg" />
                             <AvatarFallback>
-                              {currentUser?.username
-                                .charAt(0)
-                                .toUpperCase()}
+                              {post.userId.username.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <Input
-                            placeholder="Write a comment..."
-                            className="flex-1"
-                            value={commentTexts[post._id] || ""}
-                            onChange={(e) =>
-                              handleCommentChange(post._id, e.target.value)
-                            }
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                handleComment(post._id)
-                              }
-                            }}
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-bold leading-none">
+                              {post.userId.username}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(post.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p>{post.content}</p>
+                        {post.image !== "https://via.placeholder.com/300" && (
+                          <img
+                            src={post.image}
+                            alt="Post image"
+                            className="mt-2 rounded-md max-h-96 w-full object-cover"
                           />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleComment(post._id)}
-                          >
-                            <Send className="h-4 w-4" />
-                            <span className="sr-only">Send comment</span>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex flex-col items-start space-y-4">
+                        <div className="flex w-full justify-between">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <ThumbsUp className="mr-2 h-4 w-4" />
+                                React (
+                                {Object.values(post.reactions).flat().length})
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="flex p-0">
+                              {emojiReactions.map((emoji) => (
+                                <Button
+                                  key={emoji}
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    handleReaction(post._id, emoji);
+                                    document.body.click(); // Close the popover
+                                  }}
+                                >
+                                  {emoji}
+                                </Button>
+                              ))}
+                            </PopoverContent>
+                          </Popover>
+                          <Button variant="ghost" size="sm">
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Comment ({post.comments.length})
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share
                           </Button>
                         </div>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))}
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(post.reactions).map(
+                            ([emoji, users]) =>
+                              users.length > 0 && (
+                                <span key={emoji} className="text-sm">
+                                  {emoji} {users.length}
+                                </span>
+                              )
+                          )}
+                        </div>
+                        <div className="w-full space-y-5">
+                          {post.comments.map((comment) => (
+                            <div
+                              key={comment.id}
+                              className="flex items-start space-x-2"
+                            >
+                              <Avatar>
+                                <AvatarImage src="/placeholder-avatar.jpg" />
+                                <AvatarFallback>
+                                  {comment.username?.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 space-y-2 gap-5">
+                                <p className="text-sm font-bold leading-none">
+                                  {comment.username}
+                                </p>
+                                <p className="text-sm">{comment.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="flex items-center space-x-2">
+                            <Avatar>
+                              <AvatarImage src={currentUser?.avatar} />
+                              <AvatarFallback>
+                                {currentUser?.username.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <Input
+                              placeholder="Write a comment..."
+                              className="flex-1"
+                              value={commentTexts[post._id] || ""}
+                              onChange={(e) =>
+                                handleCommentChange(post._id, e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleComment(post._id);
+                                }
+                              }}
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleComment(post._id)}
+                            >
+                              <Send className="h-4 w-4" />
+                              <span className="sr-only">Send comment</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  ))
+                )}
               </div>
             </TabsContent>
-            <TabsContent value="profile" className="border-none p-0 outline-none">
+            <TabsContent
+              value="profile"
+              className="border-none p-0 outline-none"
+            >
               <Card>
                 <CardHeader>
                   <div className="flex items-center space-x-4">
@@ -720,17 +800,20 @@ export default function SocialMediaApp() {
                       <Card key={post._id}>
                         <CardContent className="pt-4">
                           <p>{post.content}</p>
-                          {post.image && post.image !== "https://via.placeholder.com/300" && (
-                            <img
-                              src={post.image}
-                              alt="Post image"
-                              className="mt-2 rounded-md max-h-96 w-full object-cover"
-                            />
-                          )}
+                          {post.image &&
+                            post.image !==
+                              "https://via.placeholder.com/300" && (
+                              <img
+                                src={post.image}
+                                alt="Post image"
+                                className="mt-2 rounded-md max-h-96 w-full object-cover"
+                              />
+                            )}
                         </CardContent>
                         <CardFooter>
                           <p className="text-sm text-muted-foreground">
-                            Posted on {new Date(post.createdAt).toLocaleString()}
+                            Posted on{" "}
+                            {new Date(post.createdAt).toLocaleString()}
                           </p>
                         </CardFooter>
                       </Card>
@@ -738,7 +821,10 @@ export default function SocialMediaApp() {
                 </div>
               </div>
             </TabsContent>
-            <TabsContent value="explore" className="border-none p-0 outline-none">
+            <TabsContent
+              value="explore"
+              className="border-none p-0 outline-none"
+            >
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {exploreItems.map((item) => (
                   <Card key={item.id}>
@@ -754,7 +840,10 @@ export default function SocialMediaApp() {
                 ))}
               </div>
             </TabsContent>
-            <TabsContent value="messages" className="border-none p-0 outline-none">
+            <TabsContent
+              value="messages"
+              className="border-none p-0 outline-none"
+            >
               <Card>
                 <CardHeader>
                   <h2 className="text-2xl font-bold">Messages</h2>
@@ -764,7 +853,10 @@ export default function SocialMediaApp() {
                 </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent value="settings" className="border-none p-0 outline-none">
+            <TabsContent
+              value="settings"
+              className="border-none p-0 outline-none"
+            >
               <Card>
                 <CardHeader>
                   <h2 className="text-2xl font-bold">Settings</h2>
@@ -779,5 +871,5 @@ export default function SocialMediaApp() {
         </main>
       </div>
     </div>
-  )
+  );
 }
