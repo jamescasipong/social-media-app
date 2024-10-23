@@ -1,126 +1,114 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import {
-  Bell,
-  Home,
-  MessageCircle,
-  Search as SearchIcon,
-  User,
-  Menu,
-  X,
-  ThumbsUp,
-  MessageSquare,
-  Share2,
-  Send,
-  Compass,
-  Settings,
-  LogOut,
-  Image as ImageIcon,
-  Smile,
-  Upload,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "../app/contexts/AuthContext";
-import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Bell,
+  Compass,
+  Home,
+  LogOut,
+  Menu,
+  MessageCircle,
+  MessageSquare,
+  Search as SearchIcon,
+  Send,
+  Settings,
+  Share2,
+  ThumbsUp,
+  Upload,
+  User
+} from 'lucide-react';
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from 'react';
+import { useAuth } from "../app/contexts/AuthContext";
 
 type User = {
-  id: string;
-  username: string;
-  email: string;
-  avatar: string;
-};
+  id: string
+  username: string
+  email: string
+  avatar: string
+}
 
 interface Comment {
-  id: string;
-  createdAt: Date;
-  username: string;
-  content: string;
+  id: string
+  createdAt: Date
+  username: string
+  content: string
 }
 
 interface Post {
-  _id: string;
-  userId: User; // This assumes userId contains user info
-  content: string;
-  image?: string; // Optional if no image is present
-  createdAt: Date; // Use string if it's a date string from API
-  comments: Comment[];
-  reactions: Record<string, string[]>; // Record of emoji reactions
+  _id: string
+  userId: User
+  content: string
+  image?: string
+  createdAt: Date
+  comments: Comment[]
+  reactions: Record<string, string[]>
 }
 
 interface ExploreItem {
-  id: string;
-  title: string;
-  image: string;
-  // Add any other explore item fields here
+  id: string
+  title: string
+  image: string
 }
 
 type Notification = {
-  id: string;
-  content: string;
-  createdAt: Date;
-};
+  id: string
+  content: string
+  createdAt: Date
+}
 
-const emojiReactions = ["👍", "❤️", "😂", "😮", "😢", "😡"];
+const emojiReactions = ["👍", "❤️", "😂", "😮", "😢", "😡"]
 
 export default function SocialMediaApp() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("home");
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [newPost, setNewPost] = useState("");
-  const [newPostImage, setNewPostImage] = useState<string | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<Post[]>([]);
-  const [exploreItems, setExploreItems] = useState<ExploreItem[]>([]);
-  const [newPostContent, setNewPostContent] = useState<string>("");
-  const [newComment, setNewComment] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [commentTexts, setCommentTexts] = useState<{ [key: string]: string }>(
-    {}
-  );
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const { user, logout } = useAuth();
-  const router = useRouter();
-
-  const handleNewComment = async (e: any) => {
-    e.preventDefault();
-
-    setNewComment(e.target.value);
-  };
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState("home")
+  const [posts, setPosts] = useState<Post[]>([])
+  const [newPost, setNewPost] = useState("")
+  const [newPostImage, setNewPostImage] = useState<string | null>(null)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [searchResults, setSearchResults] = useState<Post[]>([])
+  const [exploreItems, setExploreItems] = useState<ExploreItem[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [commentTexts, setCommentTexts] = useState<{ [key: string]: string }>({})
+  
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
+  const { user, logout } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
 
   const handleCommentChange = (postId: string, text: string) => {
     setCommentTexts((prev) => ({
       ...prev,
       [postId]: text,
-    }));
-  };
+    }))
+  }
 
-  const handleNewPost = async (e: any) => {
-    e.preventDefault();
+  const handleNewPost = async (e: React.FormEvent) => {
+    e.preventDefault()
 
     try {
       const response = await fetch(
@@ -142,55 +130,49 @@ export default function SocialMediaApp() {
             },
           }),
           headers: {
-            "Content-Type": "application/json", // Ensure correct content type
+            "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
         }
-      );
-
-      console.log("response", response);
+      )
 
       if (!response.ok) {
-        const errorData = await response.json(); // Get error details
-        throw new Error(errorData.message || "Failed to create post");
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to create post")
       }
 
-      setNewPostContent(""); // Clear content input
-      setNewPostImage(null); // Clear image input
-      setNewPost(""); // Clear post input
-      // Fetch all posts after successful creation
-      await getAllPosts();
+      setNewPost("")
+      setNewPostImage(null)
+      await getAllPosts()
     } catch (error) {
-      console.error("Error creating post:", error);
+      console.error("Error creating post:", error)
     }
-  };
+  }
 
   const getAllPosts = async () => {
     try {
       const response = await fetch(
         "https://socmedia-api.vercel.app/api/auth/posts"
-      );
+      )
       if (response.ok) {
-        const postsData = await response.json();
-        setPosts(postsData);
-
-        console.log("postsData", postsData);
+        const postsData = await response.json()
+        setPosts(postsData)
       } else {
-        throw new Error("Failed to fetch posts");
+        throw new Error("Failed to fetch posts")
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching data:", error)
     }
-  };
+  }
 
   useEffect(() => {
-    setLoading(true);
+    setLoading(true)
     const interval = setInterval(() => {
-      getAllPosts();
-    }, 2000);
-    setLoading(false);
-    return () => clearInterval(interval);
-  }, []);
+      getAllPosts()
+    }, 2000)
+    setLoading(false)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleComment = async (postId: string) => {
     try {
@@ -200,113 +182,108 @@ export default function SocialMediaApp() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`, // If you use token-based auth
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
           body: JSON.stringify({
             content: commentTexts[postId],
             username: user?.username,
           }),
         }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to add comment");
-      }
-
-      const comment: Comment = await response.json();
-
-      // Update the post's comments in state
-      setPosts((prevPosts) => {
-        return prevPosts.map((post) =>
-          post._id === postId
-            ? { ...post, comments: [...post.comments, comment] }
-            : post
-        );
-      });
-
-      getAllPosts();
+      )
 
       setCommentTexts((prev) => ({
         ...prev,
         [postId]: "",
-      }));
+      }))
+
+      if (!response.ok) {
+        throw new Error("Failed to add comment")
+      }
+
+
+      await getAllPosts().then(() => setLoading(false))
+
     } catch (error) {
-      console.error("Error adding comment:", error);
+      console.error("Error adding comment:", error)
     }
-  };
+  }
 
   useEffect(() => {
-    setCurrentUser(user);
-    console.log("user", user);
-    if (!user) {
-      router.push("/login");
+    setLoading(true)
+    getAllPosts().then(() => setLoading(false))
+    const interval = setInterval(getAllPosts, 2000)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    setCurrentUser(user)
+
+    if (user && pathname === "/login") {
+      router.push("/")
     }
-  }, [user, router]);
+
+  }, [user, router])
 
   const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
+    logout()
+    router.push("/login")
+  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onloadend = () => {
-        setNewPostImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+        setNewPostImage(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
-  };
+  }
 
   const handleReaction = (postId: string, emoji: string) => {
     setPosts(
       posts.map((post) => {
         if (post._id === postId) {
-          const updatedReactions = { ...post.reactions };
+          const updatedReactions = { ...post.reactions }
           if (currentUser) {
-            // Remove user from all other reactions
             Object.keys(updatedReactions).forEach((key) => {
               updatedReactions[key] = updatedReactions[key].filter(
                 (userId) => userId !== currentUser.id
-              );
-            });
-            // Add user to the selected reaction
+              )
+            })
             if (!updatedReactions[emoji]) {
-              updatedReactions[emoji] = [];
+              updatedReactions[emoji] = []
             }
             if (!updatedReactions[emoji].includes(currentUser.id)) {
-              updatedReactions[emoji].push(currentUser.id);
+              updatedReactions[emoji].push(currentUser.id)
             } else {
-              // If user already reacted with this emoji, remove the reaction
               updatedReactions[emoji] = updatedReactions[emoji].filter(
                 (userId) => userId !== currentUser.id
-              );
+              )
             }
           }
-          return { ...post, reactions: updatedReactions };
+          return { ...post, reactions: updatedReactions }
         }
-        return post;
+        return post
       })
-    );
-  };
+    )
+  }
 
   const handleSearch = (term: string) => {
-    setSearchTerm(term);
+    setSearchTerm(term)
     if (term.trim()) {
       const results = posts.filter(
         (post) =>
           post.content.toLowerCase().includes(term.toLowerCase()) ||
           post.userId.username.toLowerCase().includes(term.toLowerCase())
-      );
-      setSearchResults(results);
+      )
+      setSearchResults(results)
     } else {
-      setSearchResults([]);
+      setSearchResults([])
     }
-  };
+  }
 
   useEffect(() => {
-    // Simulate new notifications
     const interval = setInterval(() => {
       if (Math.random() > 0.7) {
         setNotifications((prev) => [
@@ -316,23 +293,20 @@ export default function SocialMediaApp() {
             createdAt: new Date(),
           },
           ...prev,
-        ]);
+        ])
       }
-    }, 10000);
+    }, 10000)
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval)
+  }, [])
 
-  if (!currentUser) {
-    return <div>Please log in to view the app.</div>;
-  }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   return (
-    <div className="min-h-screen   bg-gray-100 dark:bg-gray-900 flex flex-col items-center">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center">
       <header className="sticky justify-center flex top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
           <div className="mr-4 hidden md:flex">
@@ -417,11 +391,11 @@ export default function SocialMediaApp() {
                   <Button variant="ghost" size="icon">
                     <Avatar>
                       <AvatarImage
-                        src={currentUser.avatar}
-                        alt={currentUser.username}
+                        src={currentUser?.avatar}
+                        alt={currentUser?.username}
                       />
                       <AvatarFallback>
-                        {currentUser.username.charAt(0).toLocaleUpperCase()}
+                        {currentUser?.username.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span className="sr-only">User menu</span>
@@ -460,7 +434,7 @@ export default function SocialMediaApp() {
                 className="justify-start"
                 onClick={() => setActiveTab("home")}
               >
-                <Home className="mr-2 h-4 w-4" />
+                <Home className="mr-2 h-4  w-4" />
                 Home
               </Button>
               <Button
@@ -552,7 +526,7 @@ export default function SocialMediaApp() {
                         <Avatar>
                           <AvatarImage src="/placeholder-avatar.jpg" />
                           <AvatarFallback>
-                            {post.userId.username.charAt(0).toLocaleUpperCase()}
+                            {post.userId.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 space-y-1">
@@ -560,14 +534,14 @@ export default function SocialMediaApp() {
                             {post.userId.username}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {post.createdAt.toLocaleString()}
+                            {new Date(post.createdAt).toLocaleString()}
                           </p>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <p>{post.content}</p>
-                      {post.image != "https://via.placeholder.com/300" && (
+                      {post.image !== "https://via.placeholder.com/300" && (
                         <img
                           src={post.image}
                           alt="Post image"
@@ -592,8 +566,8 @@ export default function SocialMediaApp() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  handleReaction(post._id, emoji);
-                                  document.body.click(); // Close the popover
+                                  handleReaction(post._id, emoji)
+                                  document.body.click() // Close the popover
                                 }}
                               >
                                 {emoji}
@@ -610,7 +584,7 @@ export default function SocialMediaApp() {
                           Share
                         </Button>
                       </div>
-                      <div className="flex flex-wrap gap-1">
+                      <div  className="flex flex-wrap gap-1">
                         {Object.entries(post.reactions).map(
                           ([emoji, users]) =>
                             users.length > 0 && (
@@ -631,7 +605,7 @@ export default function SocialMediaApp() {
                               <AvatarFallback>
                                 {comment.username
                                   ?.charAt(0)
-                                  .toLocaleUpperCase()}
+                                  .toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 space-y-2 gap-5">
@@ -644,11 +618,11 @@ export default function SocialMediaApp() {
                         ))}
                         <div className="flex items-center space-x-2">
                           <Avatar>
-                            <AvatarImage src={currentUser.avatar} />
+                            <AvatarImage src={currentUser?.avatar} />
                             <AvatarFallback>
-                              {currentUser.username
+                              {currentUser?.username
                                 .charAt(0)
-                                .toLocaleUpperCase()}
+                                .toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <Input
@@ -660,21 +634,14 @@ export default function SocialMediaApp() {
                             }
                             onKeyPress={(e) => {
                               if (e.key === "Enter") {
-                                handleComment(post._id);
+                                handleComment(post._id)
                               }
                             }}
                           />
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={(e) => {
-                              const input = e.currentTarget
-                                .previousElementSibling as HTMLInputElement;
-                              if (input.value.trim()) {
-                                handleComment(post._id);
-                                input.value = "";
-                              }
-                            }}
+                            onClick={() => handleComment(post._id)}
                           >
                             <Send className="h-4 w-4" />
                             <span className="sr-only">Send comment</span>
@@ -686,25 +653,22 @@ export default function SocialMediaApp() {
                 ))}
               </div>
             </TabsContent>
-            <TabsContent
-              value="profile"
-              className="border-none p-0 outline-none"
-            >
+            <TabsContent value="profile" className="border-none p-0 outline-none">
               <Card>
                 <CardHeader>
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-20 w-20">
-                      <AvatarImage src={currentUser.avatar} />
+                      <AvatarImage src={currentUser?.avatar} />
                       <AvatarFallback>
-                        {currentUser.username.charAt(0).toLocaleUpperCase()}
+                        {currentUser?.username.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <h2 className="text-2xl font-bold">
-                        {currentUser.username}
+                        {currentUser?.username}
                       </h2>
                       <p className="text-muted-foreground">
-                        @{currentUser.username}
+                        @{currentUser?.username.toLowerCase()}
                       </p>
                     </div>
                   </div>
@@ -734,13 +698,13 @@ export default function SocialMediaApp() {
                 <div className="space-y-4">
                   {posts
                     .filter(
-                      (post) => post.userId.username === currentUser.username
+                      (post) => post.userId.username === currentUser?.username
                     )
                     .map((post) => (
                       <Card key={post._id}>
                         <CardContent className="pt-4">
                           <p>{post.content}</p>
-                          {post.image && (
+                          {post.image && post.image !== "https://via.placeholder.com/300" && (
                             <img
                               src={post.image}
                               alt="Post image"
@@ -750,7 +714,7 @@ export default function SocialMediaApp() {
                         </CardContent>
                         <CardFooter>
                           <p className="text-sm text-muted-foreground">
-                            Posted on {post.createdAt.toLocaleString()}
+                            Posted on {new Date(post.createdAt).toLocaleString()}
                           </p>
                         </CardFooter>
                       </Card>
@@ -758,10 +722,7 @@ export default function SocialMediaApp() {
                 </div>
               </div>
             </TabsContent>
-            <TabsContent
-              value="explore"
-              className="border-none p-0 outline-none"
-            >
+            <TabsContent value="explore" className="border-none p-0 outline-none">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {exploreItems.map((item) => (
                   <Card key={item.id}>
@@ -777,10 +738,7 @@ export default function SocialMediaApp() {
                 ))}
               </div>
             </TabsContent>
-            <TabsContent
-              value="messages"
-              className="border-none p-0 outline-none"
-            >
+            <TabsContent value="messages" className="border-none p-0 outline-none">
               <Card>
                 <CardHeader>
                   <h2 className="text-2xl font-bold">Messages</h2>
@@ -790,10 +748,7 @@ export default function SocialMediaApp() {
                 </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent
-              value="settings"
-              className="border-none p-0 outline-none"
-            >
+            <TabsContent value="settings" className="border-none p-0 outline-none">
               <Card>
                 <CardHeader>
                   <h2 className="text-2xl font-bold">Settings</h2>
@@ -808,5 +763,5 @@ export default function SocialMediaApp() {
         </main>
       </div>
     </div>
-  );
+  )
 }
