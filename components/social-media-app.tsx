@@ -166,6 +166,10 @@ export default function SocialMediaApp() {
   }
 
   useEffect(() => {
+
+    if (!user){
+      router.push("/login")
+    }
     setLoading(true)
     const interval = setInterval(() => {
       getAllPosts()
