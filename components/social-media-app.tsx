@@ -286,7 +286,7 @@ export default function SocialMediaApp() {
       alert("You must be logged in to react to a post");
       router.push("/login");
     }
-
+    console.log("Posts", posts);
     setPosts(
       posts.map((post) => {
         if (post._id === postId) {
@@ -341,21 +341,17 @@ export default function SocialMediaApp() {
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) {
-        setNotifications((prev) => [
-          {
-            id: Date.now().toString(),
-            content: `New activity on your post!`,
-            createdAt: new Date(),
-          },
-          ...prev,
-        ]);
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
+    if (postCount > 0) {
+      setNotifications((prev) => [
+        {
+          id: Date.now().toString(),
+          content: `New activity on your post!`,
+          createdAt: new Date(),
+        },
+        ...prev,
+      ]);
+    }
+  }, [postCount]);
 
   const PostSkeleton = () => (
     <Card>
@@ -454,63 +450,65 @@ export default function SocialMediaApp() {
                 />
               </div>
             </div>
-            <nav className="flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-4 w-4" />
-                    {notifications.length > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
-                        {notifications.length}
-                      </span>
+            {user && (
+              <nav className="flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="h-4 w-4" />
+                      {notifications.length > 0 && (
+                        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+                          {notifications.length}
+                        </span>
+                      )}
+                      <span className="sr-only">Notifications</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[300px]">
+                    {notifications.length === 0 ? (
+                      <DropdownMenuItem>No new notifications</DropdownMenuItem>
+                    ) : (
+                      notifications.map((notification) => (
+                        <DropdownMenuItem key={notification.id}>
+                          {notification.content}
+                        </DropdownMenuItem>
+                      ))
                     )}
-                    <span className="sr-only">Notifications</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[300px]">
-                  {notifications.length === 0 ? (
-                    <DropdownMenuItem>No new notifications</DropdownMenuItem>
-                  ) : (
-                    notifications.map((notification) => (
-                      <DropdownMenuItem key={notification.id}>
-                        {notification.content}
-                      </DropdownMenuItem>
-                    ))
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Avatar>
-                      <AvatarImage
-                        src={currentUser?.avatar}
-                        alt={currentUser?.username}
-                      />
-                      <AvatarFallback>
-                        {currentUser?.username.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="sr-only">User menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setActiveTab("profile")}>
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setActiveTab("settings")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </nav>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Avatar>
+                        <AvatarImage
+                          src={currentUser?.avatar}
+                          alt={currentUser?.username}
+                        />
+                        <AvatarFallback>
+                          {currentUser?.username.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="sr-only">User menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setActiveTab("profile")}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveTab("settings")}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </nav>
+            )}
           </div>
         </div>
       </header>
@@ -554,22 +552,36 @@ export default function SocialMediaApp() {
                 <Compass className="mr-2 h-4 w-4" />
                 Explore
               </Button>
-              <Button
-                variant="ghost"
-                className="justify-start"
-                onClick={() => setActiveTab("settings")}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log out
-              </Button>
+              {user && (
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => setActiveTab("settings")}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </Button>
+              )}
+              {user && (
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </Button>
+              )}
+              {!user && (
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  onClick={() => router.push("/login")}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign in
+                </Button>
+              )}
             </nav>
           </div>
         </aside>
@@ -657,12 +669,12 @@ export default function SocialMediaApp() {
                           <Avatar>
                             <AvatarImage src="/placeholder-avatar.jpg" />
                             <AvatarFallback>
-                              {post.userId.username.charAt(0).toUpperCase()}
+                              {post.userId?.username.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 space-y-1">
                             <p className="text-sm font-bold leading-none">
-                              {post.userId.username}
+                              {post.userId?.username}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {new Date(post.createdAt).toLocaleString()}
