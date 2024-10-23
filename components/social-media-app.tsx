@@ -44,7 +44,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from "../app/contexts/AuthContext";
 
 type User = {
-  id: string
+  _id: string
   username: string
   email: string
   avatar: string
@@ -245,33 +245,45 @@ export default function SocialMediaApp() {
   }
 
   const handleReaction = (postId: string, emoji: string) => {
+    if (!currentUser) {
+      console.error("User is not logged in");
+      return;
+    }
+
     setPosts(
       posts.map((post) => {
         if (post._id === postId) {
-          const updatedReactions = { ...post.reactions }
-          if (currentUser) {
-            Object.keys(updatedReactions).forEach((key) => {
-              updatedReactions[key] = updatedReactions[key].filter(
-                (userId) => userId !== currentUser.id
-              )
-            })
-            if (!updatedReactions[emoji]) {
-              updatedReactions[emoji] = []
-            }
-            if (!updatedReactions[emoji].includes(currentUser.id)) {
-              updatedReactions[emoji].push(currentUser.id)
-            } else {
-              updatedReactions[emoji] = updatedReactions[emoji].filter(
-                (userId) => userId !== currentUser.id
-              )
-            }
+          const updatedReactions = { ...post.reactions };
+          // Remove current user's reactions
+          Object.keys(updatedReactions).forEach((key) => {
+            updatedReactions[key] = updatedReactions[key].filter(
+              (userId) => userId !== currentUser._id
+            );
+          });
+          // Add the reaction
+          if (!updatedReactions[emoji]) {
+            updatedReactions[emoji] = [];
           }
-          return { ...post, reactions: updatedReactions }
+          updatedReactions[emoji].push(currentUser._id);
+
+          fetch(`https://socmedia-api.vercel.app/api/auth/reactions/${postId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+            body: JSON.stringify({
+              reactions: updatedReactions,
+            }),
+          });
+          return { ...post, reactions: updatedReactions };
         }
-        return post
+        return post;
       })
-    )
-  }
+    );
+
+    getAllPosts();
+  };
 
   const handleSearch = (term: string) => {
     setSearchTerm(term)

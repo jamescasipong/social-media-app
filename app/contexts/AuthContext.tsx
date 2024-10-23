@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import React, { createContext, useContext, useEffect, useState } from "react"
 
 type User = {
-  id: string
+  _id: string
   username: string
   email: string
   avatar: string
