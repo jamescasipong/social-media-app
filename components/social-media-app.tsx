@@ -453,7 +453,7 @@ export default function SocialMediaApp() {
         // Redirect to login or show a message
         router.push("/login");
       }
-    }, 6000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [user, router]);
