@@ -453,9 +453,7 @@ export default function SocialMediaApp() {
         // Redirect to login or show a message
         router.push("/login");
       }
-    }, 3000);
-
-    return () => clearTimeout(timer);
+    }, 1000);
   }, [user, router]);
 
   if (!user) {
@@ -466,6 +464,7 @@ export default function SocialMediaApp() {
           src="https://media.tenor.com/iPWC0upqq_QAAAAi/animated-man-running.gif"
           alt="xd"
         />
+        <p>Wait I'm running now!</p>
       </div>
     );
   }

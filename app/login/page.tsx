@@ -40,7 +40,11 @@ export default function Login() {
   }, [user, router]);
 
   if (user) {
-    return <>You are already logged in.</>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        You are already logged in.{" "}
+      </div>
+    );
   }
 
   return (
