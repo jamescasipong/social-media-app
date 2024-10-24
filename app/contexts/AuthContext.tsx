@@ -42,19 +42,18 @@ export const AuthProvider: React.FC<{
 
   const login = async (email: string, password: string): Promise<User> => {
     try {
-      const response = await fetch(
-        "https://socmedia-api.vercel.app/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
       if (!response.ok) {
-        throw new Error("Incorrect email or password");
+        throw response.statusText === "Unauthorized"
+          ? "Failed to log in. Invalid email or password."
+          : "This user does not exist.";
       }
 
       const userData = await response.json();
