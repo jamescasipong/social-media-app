@@ -466,7 +466,7 @@ export default function SocialMediaApp() {
           <div className="mr-4 hidden md:flex">
             <a className="mr-6 flex items-center space-x-2" href="#">
               <span className="hidden font-bold sm:inline-block">
-                SocialApp
+                SocMediaHub
               </span>
             </a>
             <nav className="flex items-center space-x-6 text-sm font-medium">
