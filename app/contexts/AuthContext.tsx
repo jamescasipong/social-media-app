@@ -44,14 +44,18 @@ export const AuthProvider: React.FC<{
       );
 
       if (!response.ok) {
-        throw new Error("Incorrect email or password");
+        throw new Error(
+          response.statusText === "Unauthorized"
+            ? "Invalid email or password"
+            : response.statusText
+        );
+      } else {
+        const userData = await response.json();
+        setUser(userData);
+        document.cookie = `authToken=${userData.token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
+        router.refresh();
+        return userData;
       }
-
-      const userData = await response.json();
-      setUser(userData);
-      document.cookie = `authToken=${userData.token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
-      router.refresh();
-      return userData;
     } catch (error) {
       console.error("Login error:", error);
       throw error;

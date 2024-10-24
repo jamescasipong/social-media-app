@@ -29,7 +29,15 @@ export default function Login() {
       router.push("/");
       console.log(login);
     } catch (err) {
-      setError("Failed to log in. Please check your credentials.");
+      if (err) {
+        setError(
+          `Failed to log in. Please check your credentials. ${
+            (err as any).message
+          }`
+        );
+      } else {
+        setError("Failed to log in. Please check your credentials.");
+      }
     }
   };
 
