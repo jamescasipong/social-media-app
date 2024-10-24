@@ -31,6 +31,24 @@ async function getUser() {
   }
 }
 
+export async function customFetch(url: string, method: any, init: any) {
+  const token = (await cookies()).get("authToken")?.value;
+  const response = await fetch(url, {
+    method: method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(init),
+  });
+
+  if (response.status === 401) {
+    throw new Error("Unauthorized");
+  }
+
+  return response;
+}
+
 export default async function ServerAuthProvider({
   children,
 }: {

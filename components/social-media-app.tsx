@@ -121,7 +121,7 @@ export default function SocialMediaApp() {
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const { user, logout } = useAuth();
+  const { user, logout, authToken } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -211,7 +211,7 @@ export default function SocialMediaApp() {
           }),
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${authToken}`,
           },
         }
       );
@@ -278,7 +278,7 @@ export default function SocialMediaApp() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
             content: commentContent,
@@ -357,7 +357,7 @@ export default function SocialMediaApp() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
             reactions: updatedPosts.find((post) => post._id === postId)
@@ -925,7 +925,7 @@ export default function SocialMediaApp() {
                 <div className="space-y-4">
                   {posts
                     .filter(
-                      (post) => post.userId.username === currentUser?.username
+                      (post) => post.userId?.username === currentUser?.username
                     )
                     .map((post) => (
                       <Card key={post._id}>

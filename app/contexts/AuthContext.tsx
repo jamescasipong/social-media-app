@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 type User = {
@@ -19,6 +19,7 @@ type AuthContextType = {
     password: string
   ) => Promise<User>;
   logout: () => void;
+  authToken: string | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +29,16 @@ export const AuthProvider: React.FC<{
   initialUser: User | null;
 }> = ({ children, initialUser }) => {
   const [user, setUser] = useState<User | null>(initialUser);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // Try to retrieve the authToken from localStorage as a fallback
+    const storedToken = localStorage.getItem("authToken");
+    if (storedToken) {
+      setAuthToken(storedToken);
+    }
+  }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
     try {
@@ -44,18 +54,19 @@ export const AuthProvider: React.FC<{
       );
 
       if (!response.ok) {
-        throw new Error(
-          response.statusText === "Unauthorized"
-            ? "Invalid email or password"
-            : response.statusText
-        );
-      } else {
-        const userData = await response.json();
-        setUser(userData);
-        document.cookie = `authToken=${userData.token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
-        router.refresh();
-        return userData;
+        throw new Error("Incorrect email or password");
       }
+
+      const userData = await response.json();
+      setUser(userData);
+      setAuthToken(userData.token);
+
+      // Set the token in both cookie and localStorage
+      document.cookie = `authToken=${userData.token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
+      localStorage.setItem("authToken", userData.token);
+
+      router.refresh();
+      return userData;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -83,11 +94,16 @@ export const AuthProvider: React.FC<{
         throw new Error("Email already in use or another error occurred");
       }
 
-      const newUser = await response.json();
-      setUser(newUser);
-      document.cookie = `authToken=${newUser.token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
+      const userData = await response.json();
+      setUser(userData);
+      setAuthToken(userData.token);
+
+      // Set the token in both cookie and localStorage
+      document.cookie = `authToken=${userData.token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
+      localStorage.setItem("authToken", userData.token);
+
       router.refresh();
-      return newUser;
+      return userData;
     } catch (error) {
       console.error("Registration error:", error);
       throw error;
@@ -96,14 +112,16 @@ export const AuthProvider: React.FC<{
 
   const logout = () => {
     setUser(null);
+    setAuthToken(null);
     document.cookie =
       "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    localStorage.removeItem("authToken");
     router.refresh();
     router.push("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, authToken }}>
       {children}
     </AuthContext.Provider>
   );
@@ -116,3 +134,7 @@ export const useAuth = () => {
   }
   return context;
 };
+
+{
+  /* <AuthProvider initialUser={user}>{children}</AuthProvider> */
+}
