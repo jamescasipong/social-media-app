@@ -481,21 +481,21 @@ export default function SocialMediaApp() {
             </a>
             <nav className="flex items-center space-x-6 text-sm font-medium">
               <a
-                className="transition-colors hover:text-foreground/80 text-foreground"
+                className="transition-colors  hover:text-gray-700 text-foreground"
                 href="#"
                 onClick={() => setActiveTab("home")}
               >
                 Home
               </a>
               <a
-                className="transition-colors hover:text-foreground/80 text-muted-foreground"
+                className="transition-colors hover:text-gray-700 text-muted-foreground"
                 href="#"
                 onClick={() => setActiveTab("explore")}
               >
                 Explore
               </a>
               <a
-                className="transition-colors hover:text-foreground/80 text-muted-foreground"
+                className="transition-colors  hover:text-gray-700 text-muted-foreground"
                 href="#"
                 onClick={() => setActiveTab("messages")}
               >
@@ -597,7 +597,7 @@ export default function SocialMediaApp() {
             <nav className="flex flex-col space-y-2">
               <Button
                 variant="ghost"
-                className="justify-start"
+                className="justify-start hover:bg-slate-300"
                 onClick={() => setActiveTab("home")}
               >
                 <Home className="mr-2 h-4  w-4" />
@@ -605,7 +605,7 @@ export default function SocialMediaApp() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className="justify-start hover:bg-slate-300"
                 onClick={() => setActiveTab("profile")}
               >
                 <User className="mr-2 h-4 w-4" />
@@ -613,7 +613,7 @@ export default function SocialMediaApp() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className="justify-start hover:bg-slate-300"
                 onClick={() => setActiveTab("messages")}
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
@@ -621,7 +621,7 @@ export default function SocialMediaApp() {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start"
+                className="justify-start hover:bg-slate-300"
                 onClick={() => setActiveTab("explore")}
               >
                 <Compass className="mr-2 h-4 w-4" />
@@ -630,27 +630,27 @@ export default function SocialMediaApp() {
               {user && (
                 <Button
                   variant="ghost"
-                  className="justify-start"
+                  className="justify-start hover:bg-slate-300"
                   onClick={() => setActiveTab("settings")}
                 >
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Settings className="mr-2 h-4 w-4 hover:bg-slate-300" />
                   Settings
                 </Button>
               )}
               {user && (
                 <Button
                   variant="ghost"
-                  className="justify-start"
+                  className="justify-start hover:bg-slate-300"
                   onClick={handleLogout}
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="mr-2 h-4 w-4 hover:bg-slate-300" />
                   Log out
                 </Button>
               )}
               {!user && (
                 <Button
                   variant="ghost"
-                  className="justify-start"
+                  className="justify-start hover:bg-slate-300"
                   onClick={() => router.push("/login")}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
