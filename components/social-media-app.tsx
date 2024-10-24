@@ -448,6 +448,14 @@ export default function SocialMediaApp() {
   );
 
   if (!user) {
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        router.push("/login");
+      }, 6000);
+
+      return () => clearTimeout(timer);
+    }, []);
+
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
         <img
