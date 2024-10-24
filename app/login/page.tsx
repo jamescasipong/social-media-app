@@ -41,8 +41,12 @@ export default function Login() {
 
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        You are already logged in.{" "}
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <img
+          className="w-56 h-72"
+          src="https://media.tenor.com/iPWC0upqq_QAAAAi/animated-man-running.gif"
+          alt="xd"
+        />
       </div>
     );
   }
