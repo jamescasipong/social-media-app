@@ -447,15 +447,18 @@ export default function SocialMediaApp() {
     </Card>
   );
 
-  if (!user) {
-    useEffect(() => {
-      const timer = setTimeout(() => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!user) {
+        // Redirect to login or show a message
         router.push("/login");
-      }, 6000);
+      }
+    }, 6000);
 
-      return () => clearTimeout(timer);
-    }, []);
+    return () => clearTimeout(timer);
+  }, [user, router]);
 
+  if (!user) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
         <img
