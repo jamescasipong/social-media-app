@@ -98,17 +98,48 @@ export default function SocialMediaApp() {
     {}
   );
   const [postCount, setPostCount] = useState(0);
+  const [openReactionPopover, setOpenReactionPopover] = useState(() => {
+    const initialValue = posts.reduce((acc: any, post: any) => {
+      acc[post._id] = false;
+      return acc;
+    }, {});
+    return initialValue;
+  });
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const { user, logout } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
+  const handleOpenReactionPopover = (postId: string) => {
+    setOpenReactionPopover((prev: any) => ({
+      ...prev,
+      [postId]: false,
+    }));
+  };
 
   const handleCommentChange = (postId: string, text: string) => {
     setCommentTexts((prev) => ({
       ...prev,
       [postId]: text,
     }));
+  };
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const getAllPosts = async () => {
+    try {
+      const response = await fetch(
+        "https://socmedia-api.vercel.app/api/auth/posts"
+      );
+      if (response.ok) {
+        const postsData = await response.json();
+        setPosts(postsData);
+      } else {
+        throw new Error("Failed to fetch posts");
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -131,11 +162,29 @@ export default function SocialMediaApp() {
     fetchPosts();
   }, []);
 
+  useEffect(() => {
+    getAllPosts();
+
+    const intervalId = setInterval(() => {
+      getAllPosts();
+    }, 5000); // Poll every 5 seconds
+
+    // Clean up on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    setCurrentUser(user);
+
+    if (user && pathname === "/login") {
+      router.push("/");
+    }
+  }, [user, router]);
+
   const handleNewPost = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
-      alert("You must be logged in to create a post");
       router.push("/login");
     }
 
@@ -180,60 +229,49 @@ export default function SocialMediaApp() {
     }
   };
 
-  const getAllPosts = async () => {
-    try {
-      const response = await fetch(
-        "https://socmedia-api.vercel.app/api/auth/posts"
-      );
-      if (response.ok) {
-        const postsData = await response.json();
-        setPosts(postsData);
-      } else {
-        throw new Error("Failed to fetch posts");
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      getAllPosts();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
   const handleComment = async (postId: string) => {
+    // Check if user is logged in
     if (!user) {
-      alert("You must be logged in to create a post");
       router.push("/login");
+      return; // Early return to prevent further execution
+    }
+
+    const commentContent = commentTexts[postId]?.trim();
+
+    // Validate comment content
+    if (!commentContent) {
+      alert("Comment cannot be empty");
+      return;
     }
 
     try {
-      const updatedPosts = posts.map((post) =>
+      // Optimistically update local state
+      const updatedPosts = posts.map((post: any) =>
         post._id === postId
           ? {
               ...post,
               comments: [
                 ...post.comments,
                 {
-                  id: Date.now().toString(),
-                  createdAt: new Date(),
-                  username: user?.username || "Anonymous",
-                  content: commentTexts[postId],
+                  id: Date.now().toString(), // Consider using a unique ID from the server if available
+                  createdAt: new Date().toISOString(),
+                  username: user.username || "Anonymous",
+                  content: commentContent,
                 },
               ],
             }
           : post
       );
+
       setPosts(updatedPosts);
 
+      // Clear the comment input for this post
       setCommentTexts((prev) => ({
         ...prev,
         [postId]: "",
       }));
 
+      // Send comment to the server
       const response = await fetch(
         `https://socmedia-api.vercel.app/api/auth/comments/${postId}`,
         {
@@ -243,27 +281,24 @@ export default function SocialMediaApp() {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
           body: JSON.stringify({
-            content: commentTexts[postId],
-            username: user?.username,
+            content: commentContent,
+            username: user.username,
           }),
         }
       );
 
+      // Handle response errors
       if (!response.ok) {
         throw new Error("Failed to add comment");
       }
+
+      await getAllPosts();
     } catch (error) {
       console.error("Error adding comment:", error);
+      // Optional: Revert optimistic update if the request fails
+      setPosts(posts); // You might want to implement a more sophisticated rollback
     }
   };
-
-  useEffect(() => {
-    setCurrentUser(user);
-
-    if (user && pathname === "/login") {
-      router.push("/");
-    }
-  }, [user, router]);
 
   const handleLogout = () => {
     logout();
@@ -281,49 +316,67 @@ export default function SocialMediaApp() {
     }
   };
 
-  const handleReaction = (postId: string, emoji: string) => {
+  const handleReaction = async (postId: string, emoji: string) => {
+    // Check if user is logged in
     if (!user) {
       alert("You must be logged in to react to a post");
       router.push("/login");
+      return; // Early return to prevent further execution
     }
-    console.log("Posts", posts);
-    setPosts(
-      posts.map((post) => {
-        if (post._id === postId) {
-          const updatedReactions = { ...post.reactions };
-          // Remove current user's reactions
-          Object.keys(updatedReactions).forEach((key) => {
-            updatedReactions[key] = updatedReactions[key].filter(
-              (userId) => userId !== currentUser?._id
-            );
-          });
-          // Add the reaction
-          if (!updatedReactions[emoji]) {
-            updatedReactions[emoji] = [];
-          }
-          if (currentUser?._id) {
-            updatedReactions[emoji].push(currentUser._id);
-          }
+    handleOpenReactionPopover(postId);
+    // Optimistically update the local state
+    const updatedPosts = posts.map((post) => {
+      if (post._id === postId) {
+        const updatedReactions = { ...post.reactions };
 
-          fetch(
-            `https://socmedia-api.vercel.app/api/auth/reactions/${postId}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-              },
-              body: JSON.stringify({
-                reactions: updatedReactions,
-              }),
-            }
+        // Remove current user's reactions
+        Object.keys(updatedReactions).forEach((key) => {
+          updatedReactions[key] = updatedReactions[key].filter(
+            (userId) => userId !== user._id // Assuming `user` is your current user object
           );
+        });
 
-          return { ...post, reactions: updatedReactions };
+        // Add the new reaction
+        if (!updatedReactions[emoji]) {
+          updatedReactions[emoji] = [];
         }
-        return post;
-      })
-    );
+        updatedReactions[emoji].push(user._id);
+
+        return { ...post, reactions: updatedReactions };
+      }
+      return post;
+    });
+
+    setPosts(updatedPosts); // Set the optimistic state
+
+    try {
+      // Send the reaction to the server
+      const response = await fetch(
+        `https://socmedia-api.vercel.app/api/auth/reactions/${postId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          body: JSON.stringify({
+            reactions: updatedPosts.find((post) => post._id === postId)
+              ?.reactions,
+          }),
+        }
+      );
+
+      await getAllPosts();
+
+      // Handle response errors
+      if (!response.ok) {
+        throw new Error("Failed to add reaction");
+      }
+    } catch (error) {
+      console.error("Error adding reaction:", error);
+      // Revert the optimistic update if the request fails
+      setPosts(posts); // This would require storing the previous state before updating
+    }
   };
 
   const handleSearch = (term: string) => {
@@ -393,6 +446,18 @@ export default function SocialMediaApp() {
       </CardFooter>
     </Card>
   );
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <img
+          className="w-56 h-72"
+          src="https://media.tenor.com/iPWC0upqq_QAAAAi/animated-man-running.gif"
+          alt="xd"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center">
@@ -620,7 +685,12 @@ export default function SocialMediaApp() {
                           </span>
                         )}
                       </div>
-                      <Button onClick={handleNewPost}>Post</Button>
+                      <Button
+                        disabled={!newPost.trim()}
+                        onClick={handleNewPost}
+                      >
+                        Post
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -629,7 +699,6 @@ export default function SocialMediaApp() {
                     {/**[...Array(postCount)].map((_, index) => (
                       <PostSkeleton key={index} />
                     ))*/}
-
                     <div className="flex flex-col gap-2 justify-center items-center h-32">
                       <p className="text-lg text-muted-foreground">
                         I'm getting it ready for you... 😉
@@ -694,7 +763,12 @@ export default function SocialMediaApp() {
                       </CardContent>
                       <CardFooter className="flex flex-col items-start space-y-4">
                         <div className="flex w-full justify-between">
-                          <Popover>
+                          <Popover
+                            open={openReactionPopover[post._id]}
+                            onOpenChange={(isOpen) => {
+                              setOpenReactionPopover(!isOpen);
+                            }}
+                          >
                             <PopoverTrigger asChild>
                               <Button variant="ghost" size="sm">
                                 <ThumbsUp className="mr-2 h-4 w-4" />
@@ -710,7 +784,6 @@ export default function SocialMediaApp() {
                                   size="sm"
                                   onClick={() => {
                                     handleReaction(post._id, emoji);
-                                    document.body.click(); // Close the popover
                                   }}
                                 >
                                   {emoji}
@@ -780,6 +853,7 @@ export default function SocialMediaApp() {
                             <Button
                               size="icon"
                               variant="ghost"
+                              disabled={!commentTexts[post._id]?.trim()}
                               onClick={() => handleComment(post._id)}
                             >
                               <Send className="h-4 w-4" />
