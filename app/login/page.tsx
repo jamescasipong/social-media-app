@@ -27,7 +27,6 @@ export default function Login() {
     try {
       await login(email, password);
       router.push("/");
-      console.log(login);
     } catch (err) {
       setError(`${err}`);
     }
